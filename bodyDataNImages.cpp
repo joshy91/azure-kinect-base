@@ -99,6 +99,7 @@ int main()
                 size_t num_bodies = k4abt_frame_get_num_bodies(body_frame);
                 printf("%zu bodies are detected!\n", num_bodies);
                 k4a_capture_t input_capture = k4abt_frame_get_capture(body_frame);
+                uint64_t time = k4abt_frame_get_device_timestamp_usec(body_frame)
                 // Access the color image
                 k4a_image_t colorImage;
                 k4a_image_t depthImage;
@@ -136,9 +137,14 @@ int main()
                     int cols = k4a_image_get_width_pixels(colorImage);
                     cv::Mat colorMat(rows , cols, CV_8UC4, (void*)buffer, cv::Mat::AUTO_STEP);
                     cv::namedWindow("Color");
+                    std::string colName = "colorImage";
+                    colFullName = colName + std::to_string(time)
+                    colLocation = "../outputs/rgbImgs/" + colFullName + ".jpg"
+                    printf(colLocation)
+                    cv::imwrite(colLocation,colorImage);
                     cv::imshow("Color", colorMat);
-                    cv::waitKey(500);
-                    cv::destroyWindow("Color");
+                    cv::waitKey(100);
+                    
                     k4a_image_release(colorImage);
                 }
                 else
@@ -171,8 +177,8 @@ int main()
                     const cv::Mat irMat(cv::Size(width, height), CV_8U, grayScaleImg.data());
                     cv::namedWindow("IR");
                     cv::imshow("IR", irMat);
-                    cv::waitKey(500);
-                    cv::destroyWindow("IR");
+                    cv::waitKey(100);
+
                     k4a_image_release(irImage);
 
                 }
@@ -201,8 +207,8 @@ int main()
                     cv::Mat depthMat(rows, cols, CV_16U, (void*)buffer, cv::Mat::AUTO_STEP);
                     cv::namedWindow("Depth");
                     cv::imshow("Depth", depthMat);
-                    cv::waitKey(500);
-                    cv::destroyWindow("Depth");
+                    cv::waitKey(100);
+
                     k4a_image_release(depthImage);
                 }
                 else
@@ -299,6 +305,7 @@ int main()
   		    fprintf(fp,"\n%d-%02d-%02d_%02d-%02d-%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
             fprintf(fp,",%03u", micro * 1000);
                 fprintf(fp,",%zu", id);
+                fprintf(fp,",%zu", time)
                     fprintf(fp,",%lf", pelvis.xyz.x / pelvis_orientation.wxyz.w);
                     fprintf(fp,",%lf", pelvis.xyz.y / pelvis_orientation.wxyz.w);
                     fprintf(fp,",%lf", pelvis.xyz.z / pelvis_orientation.wxyz.w);
@@ -523,7 +530,9 @@ int main()
     } while (frame_count < 100);
 
     printf("Finished body tracking processing!\n");
-
+    cv::destroyWindow("Color");
+    cv::destroyWindow("IR");
+    cv::destroyWindow("Depth");
     k4abt_tracker_shutdown(tracker);
     k4abt_tracker_destroy(tracker);
     k4a_device_stop_cameras(device);
